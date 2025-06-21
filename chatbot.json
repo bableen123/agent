@@ -1,0 +1,266 @@
+{
+  "name": "chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        220,
+        0
+      ],
+      "id": "84485b7b-80fa-49a2-8b03-9eccd21c5343",
+      "name": "download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "mqsOfIKd6NvFuGTU",
+          "name": "bableen65@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an assistant that summarizes meeting transcripts to generates personalized to-do lists for each participant in the meeting.  {{ $json[\"data\"] }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        660,
+        40
+      ],
+      "id": "42398a9b-aff3-466a-a90d-0ae649a96f03",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-2",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        680,
+        260
+      ],
+      "id": "d12b76a5-e42b-4c73-9065-7c143ea47724",
+      "name": "Azure OpenAI Chat Model",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "cErLZWkbMa1l1oaN",
+          "name": "Azure Open AI account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1hcbqJcLUiZ85-oj5VqvDbjZ_BAUWlA1a",
+          "mode": "list",
+          "cachedResultName": "meets",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1hcbqJcLUiZ85-oj5VqvDbjZ_BAUWlA1a"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3971a825-4907-470c-90ef-71ccf95347f8",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "mqsOfIKd6NvFuGTU",
+          "name": "bableen65@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        200,
+        800
+      ],
+      "id": "83542f9e-0377-4dce-b731-fe3e013fe3d2",
+      "name": "When chat message received",
+      "webhookId": "3f55a8ec-70d6-4024-b0f8-6321e54502cc"
+    },
+    {
+      "parameters": {
+        "sendTo": "bableen65@gmail.com",
+        "subject": "task from meet",
+        "message": "=<p>Hi {{ $json[\"name\"] || \"Team\" }},</p>\n\n<p><strong>Your personalized to-do list from the meeting:</strong></p>\n\n{{ $json[\"text\"]\n    .replace(/---/g, \"<hr>\")\n    .replace(/###\\s\\*\\*(.*?)\\*\\*/g, \"<h3>$1</h3>\")\n    .replace(/\\*\\*(.*?)\\*\\*/g, \"<strong>$1</strong>\")\n    .replace(/\\n\\d+\\.\\s/g, \"<br>&nbsp;&nbsp;• \")\n    .replace(/\\n/g, \"<br>\")\n}}\n<p><br>Thanks,<br>AI Assistant</p>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1020,
+        40
+      ],
+      "id": "d7e04402-2561-4946-8e49-8b39d3a3db20",
+      "name": "Gmail",
+      "webhookId": "ea885852-523a-4dd7-a2b6-d3cc706616ae",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "EDDoS9tZV7eP8Cyo",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        440,
+        40
+      ],
+      "id": "01cef025-4e5a-4df0-8709-f14103a54e6a",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "bableen65@gmail.com",
+          "mode": "list",
+          "cachedResultName": "bableen65@gmail.com"
+        },
+        "end": "={{ $now.plus(30, 'min') }}",
+        "additionalFields": {
+          "attendees": [],
+          "summary": "=task reminder"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1220,
+        40
+      ],
+      "id": "65435265-f04d-462f-aa8d-0a32ec188396",
+      "name": "Google Calendar",
+      "notesInFlow": false,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "tlFDGTcTS0vAUaSY",
+          "name": "Google Calendar account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        []
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "69a88067-11b6-41fd-a56b-ab664be08e5e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2034c58611c7f20e93730c6c63dd0ba1abfeb599e9f54972211d98eea0260ff1"
+  },
+  "id": "by0n6uJvcNK2SXYd",
+  "tags": []
+}
